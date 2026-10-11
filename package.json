@@ -31,6 +31,8 @@
   "scripts": {
     "build": "node tools/build.mjs",
     "ci": "node tools/ci.mjs",
+    "preflight": "node tools/preflight.mjs",
+    "deploy:check": "node tools/ci.mjs && node tools/preflight.mjs",
     "diag": "node tools/diag.mjs",
     "verify": "node tools/verify.mjs",
     "verify:tiling": "node tools/verify.mjs --query \"&demo=tiling\"",
@@ -39,7 +41,7 @@
     "metrics": "node tools/metrics.mjs",
     "glyphs": "node tools/glyphs.mjs",
     "serve": "node tools/serve.mjs",
-    "release": "node tools/ci.mjs && node tools/diag.mjs && node tools/verify.mjs"
+    "release": "node tools/ci.mjs && node tools/preflight.mjs && node tools/diag.mjs && node tools/verify.mjs"
   },
   "omarchy": {
     "upstream": "https://omarchy.org",

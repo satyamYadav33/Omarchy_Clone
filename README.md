@@ -9,18 +9,19 @@ bundled themes, the full hotkey table, and a working terminal, editor, file
 manager and system monitor.
 
 ```
-omarchy.html        435 KB   ← open this. No server, no install, no network.
-index.html          435 KB   identical copy, so the folder has an entry point
+omarchy.html        437 KB   ← open this. No server, no install, no network.
+index.html          437 KB   identical copy, so the folder has an entry point
+public/                      the same bundle in the conventional static output
+                             directory, so any host deploys with no config
 src/                         the 17 modules it is built from
 tools/                       build + verification tooling
 ```
 
 There is no build step to *use* it. `omarchy.html` is complete and self-contained.
 
-**Deploying:** the repository is ready for Vercel with no configuration — a root
-`index.html` and no framework is a static site, so the build command, output
-directory and install command are all empty and there are no environment
-variables. See [DEPLOY.md](DEPLOY.md) for the push and deploy steps.
+**Deploying:** ready for Vercel (and Netlify, Cloudflare Pages, GitHub Pages) with
+no per-host configuration. See [DEPLOY.md](DEPLOY.md) for the deploy steps, the
+configuration rationale, and the post-mortem of the first failed deployment.
 
 ---
 

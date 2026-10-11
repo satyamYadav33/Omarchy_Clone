@@ -60,6 +60,17 @@ if (!existsSync(bundlePath)) {
   } else {
     bad('index.html is missing');
   }
+
+  /* public/ is what Vercel serves. A missing or stale copy is exactly the
+     failure that broke the first deployment, so it is checked explicitly. */
+  const pub = join(root, 'public', 'index.html');
+  if (!existsSync(pub)) {
+    bad('public/index.html is missing — Vercel serves outputDirectory "public"');
+  } else if (readFileSync(pub, 'utf8') !== after) {
+    bad('public/index.html is stale — rebuild and commit it');
+  } else {
+    ok('public/index.html matches omarchy.html (the Vercel output directory)');
+  }
 }
 
 /* ----------------------------------------------------------- 3. invariants */

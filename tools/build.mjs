@@ -6,12 +6,17 @@
  *
  *   node tools/build.mjs
  *
- * Outputs (at the repository root):
+ * Outputs:
  *   omarchy.html   — the complete desktop in ONE file. Double-click it. No
- *                    server, no install, no build step, no network, ~200 KB.
+ *                    server, no install, no build step, no network, ~437 KB.
  *   index.html     — the same bundle, written as the folder's entry point.
+ *   public/        — a copy of both, in the conventional static output
+ *                    directory. Vercel expects `public` when a build command
+ *                    runs, and every other static host and `npx serve` default
+ *                    to it as well, so producing it keeps the build working
+ *                    everywhere without special configuration.
  * ==========================================================================*/
-import { readFileSync, writeFileSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync, statSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -71,6 +76,14 @@ function build() {
   writeFileSync(p('omarchy.html'), html, 'utf8');
   writeFileSync(p('index.html'), html, 'utf8');
 
+  /* Also emit the conventional static output directory. Vercel runs a build
+     command as soon as package.json defines one, and then insists on finding
+     `public`; producing it here means the same build works on Vercel, on
+     Netlify/Cloudflare, and under `npx serve public`, with no per-host config. */
+  mkdirSync(p('public'), { recursive: true });
+  writeFileSync(p('public', 'index.html'), html, 'utf8');
+  writeFileSync(p('public', 'omarchy.html'), html, 'utf8');
+
   const bytes = statSync(p('omarchy.html')).size;
   const kb = (bytes / 1024).toFixed(1);
   const ansiThemes = (read('themes.js').match(/name: '/g) || []).length;
@@ -79,7 +92,7 @@ function build() {
   console.log('  scripts   : ' + SCRIPTS.length + ' bundled in order');
   console.log('  themes    : ' + ansiThemes + ' palettes');
   console.log('  css       : ' + (css.length / 1024).toFixed(1) + ' KB');
-  console.log('  bundle    : omarchy.html + index.html  (' + kb + ' KB, zero dependencies)');
+  console.log('  bundle    : omarchy.html + index.html + public/  (' + kb + ' KB, zero dependencies)');
   console.log('  open      : double-click omarchy.html');
 }
 

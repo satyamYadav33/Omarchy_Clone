@@ -1,11 +1,15 @@
 # ---------------------------------------------------------------------------
-# Kept OUT of the Vercel deployment.
+# Kept OUT of the Vercel upload.
 #
-# The site is one static file (index.html) plus screenshots, so nothing here is
-# needed at runtime. src/ and tools/ are deliberately NOT ignored: they are
-# committed so anyone can rebuild, and keeping them in the deployment makes the
-# deployed copy self-documenting. The whole repo is ~2.5 MB.
+# Vercel only needs: src/, tools/, package.json, vercel.json and public/ (which
+# the build regenerates anyway). src/ and tools/ are deliberately NOT ignored —
+# the build runs on Vercel and needs them.
+#
+# The site itself is served from public/, produced by `node tools/build.mjs`.
 # ---------------------------------------------------------------------------
+
+# Build output that Vercel regenerates during the build
+public/
 
 # Local tooling scratch space (headless Chrome profiles live here)
 .verify/
@@ -17,7 +21,6 @@
 
 # GitHub-only files
 .github/
-CONTRIBUTING.md
 DEPLOY.md
 
 # Local environment and editor noise
@@ -33,3 +36,10 @@ node_modules/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# ---------------------------------------------------------------------------
+# NOT ignored on purpose: screenshots/, README.md, LICENSE, omarchy.html and
+# index.html. They cost ~3 MB, well within limits, and keeping them makes the
+# uploaded artifact self-documenting. The deployed site only serves public/,
+# so they are storage rather than payload.
+# ---------------------------------------------------------------------------

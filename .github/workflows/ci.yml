@@ -34,9 +34,12 @@ jobs:
       - name: Syntax, rebuild identical, invariants
         run: node tools/ci.mjs
 
+      - name: Deployment config preflight
+        run: node tools/preflight.mjs
+
       - name: Report bundle size
         run: |
-          ls -lh omarchy.html index.html
+          ls -lh omarchy.html index.html public/
           echo "bundle bytes: $(wc -c < omarchy.html)"
 
       - name: Upload bundle as a build artifact

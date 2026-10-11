@@ -3,27 +3,27 @@
 Repository: <https://github.com/satyamYadav33/Omarchy_Clone>
 Static hosting: **Vercel** — no build step, no environment variables, no framework.
 
-> **Status: the initial commit is already pushed.** `main` is at `974c3bd` with all
-> 54 files. The remaining step is the Vercel import below.
+> **Status: pushed and deploy-ready.** `main` carries the fix for the first
+> deployment failure — see *Troubleshooting* for exactly what went wrong and why.
 
 ---
 
 ## Deploying on Vercel
 
 **Option A — dashboard (easiest).** Go to <https://vercel.com/new>, import
-`Omarchy_Clone`, and click Deploy. **Accept every default** — there is nothing to
-configure:
+`Omarchy_Clone`, and click Deploy. Everything is already configured in
+`vercel.json`:
 
 | Vercel setting | Value | Why |
 |---|---|---|
-| Framework Preset | **Other** (auto-detected) | There is no framework |
-| Build Command | *(empty)* | `index.html` at the root **is** the built output |
-| Output Directory | *(empty / root)* | The deliverable is committed, not generated on the host |
-| Install Command | *(empty)* | `dependencies: {}` — nothing to install |
+| Framework Preset | `null` (none) | No framework to detect |
+| Build Command | `node tools/build.mjs` | Declared explicitly, **never left to auto-detection** |
+| Output Directory | `public` | Declared explicitly, so Vercel never guesses |
+| Install Command | `echo "zero dependencies…"` | There is nothing to install |
 | Root Directory | `./` | — |
 | Environment Variables | **none** | Nothing is configurable at runtime |
 
-**Option B — CLI** (installed on this machine, v2.x, needs a login):
+**Option B — CLI** (installed here, needs a login):
 
 ```bash
 vercel login
@@ -33,18 +33,31 @@ vercel --prod   # production deployment
 
 Either way, every later `git push` to `main` redeploys automatically.
 
-`vercel.json` only adds caching and security headers, plus `cleanUrls`. Delete it
-and the site still deploys and works.
+### Why `public/` exists
 
-The whole deployment is roughly **3.5 MB**, most of which is the screenshots.
+`tools/build.mjs` writes the bundle to **three** places:
+
+```
+omarchy.html          double-click this, or serve the folder directly
+index.html            the folder's entry point
+public/index.html     the conventional static output directory
+public/omarchy.html   same file
+```
+
+`public/` is committed so the repo is deployable on **any** static host with zero
+configuration — Vercel, Netlify, Cloudflare Pages, GitHub Pages or
+`npx serve public` all expect that folder by convention. The root copies stay so
+that cloning and double-clicking keeps working with no build step at all.
+
+All four files are byte-identical, and `npm run preflight` asserts that.
 
 ### Routes
 
 | Path | Serves |
 |---|---|
-| `/` | `index.html` — the full desktop |
-| `/omarchy.html` | byte-identical copy of the same file |
-| `/screenshots/*.png` | the verification screenshots |
+| `/` | `public/index.html` — the full desktop |
+| `/omarchy.html` | the same bundle |
+| `/screenshots/*.png` | *not served* — they live in the repo for the README only |
 
 Deep links are **query strings, not routes**, so no rewrites are needed —
 `/?demo=theme` and `/?open=editor,files` both work on a plain static host:
@@ -118,13 +131,14 @@ That is a client issue, not a repository one.)*
 ## Verifying before you deploy
 
 ```bash
-node tools/ci.mjs        # syntax, bundle up to date, invariants — no browser needed
-node tools/serve.mjs     # preview exactly what Vercel will serve (localhost:4173)
+npm run deploy:check   # ci (bundle up to date, invariants) + preflight (host config)
+node tools/serve.mjs   # preview exactly what Vercel will serve (localhost:4173)
 ```
 
-`tools/ci.mjs` fails if `src/` was edited without rebuilding `omarchy.html`,
-which is the one mistake that would otherwise ship a stale bundle. It runs in
-GitHub Actions on every push and pull request (`.github/workflows/ci.yml`).
+`tools/ci.mjs` fails if `src/` was edited without rebuilding, or if `public/` is
+stale. `tools/preflight.mjs` fails if `vercel.json` is inconsistent with
+`package.json` — the exact class of bug that broke the first deployment. Both run
+in GitHub Actions on every push and pull request.
 
 With a browser available you can also run the deeper checks:
 
@@ -137,13 +151,43 @@ node tools/verify.mjs --query "&demo=tiling"
 
 ## Troubleshooting
 
+### The first deployment failed like this
+
+```
+20:19:34.166  > omarchy-web-clone@4.0.4 build
+20:19:34.166  > node tools/build.mjs
+20:19:34.166  bundle    : omarchy.html + index.html  (436.6 KB, zero dependencies)
+20:19:34.192  Error: No Output Directory named "public" found after the Build completed.
+```
+
+**Cause — a configuration contradiction, not a code bug.** The build ran and
+succeeded. But `vercel.json` had `"buildCommand": null` and
+`"outputDirectory": null`, while `package.json` defined a `build` script. Vercel
+therefore auto-detected the build, ran it, and then required its conventional
+output folder. `null` does not mean "no build" — it means "figure it out", and
+what it figured out was `public`, which did not exist.
+
+There was a second, quieter mistake: `npm run build` rewrote `omarchy.html` in
+place, so the "build" produced **no artifact at all** — there was nothing to copy
+into an output directory even if Vercel had known where to look.
+
+**Fix (in this commit):**
+
+1. `tools/build.mjs` now writes `public/index.html` and `public/omarchy.html` as well.
+2. `vercel.json` states `"buildCommand": "node tools/build.mjs"` and
+   `"outputDirectory": "public"` explicitly — nothing is inferred.
+3. `installCommand` is set to a no-op echo, since there is genuinely nothing to install.
+4. `tools/preflight.mjs` now fails locally if any of this drifts apart again.
+
+### Other symptoms
+
 | Symptom | Cause | Fix |
 |---|---|---|
-| Deployed page is blank | A stale or un-rebuilt bundle was pushed | `node tools/build.mjs`, commit, push |
+| `No Output Directory named "public"` | `outputDirectory` unset while a build command runs | `npm run preflight`, then commit the corrected `vercel.json` |
+| Deployed page is blank | A stale bundle was pushed | `npm run build`, commit, push |
 | `fatal: … schannel … SEC_E_NO_CREDENTIALS` | Windows TLS backend | `git config http.sslBackend openssl` |
-| Vercel build fails | A framework preset or build command was set manually | Clear both; leave the defaults |
-| `push` rejected, non-fast-forward | The repo already has commits | `git pull --rebase origin main` first |
-| Screenshots 404 | `.vercelignore` was edited to exclude them | Remove the `screenshots/` rule |
+| `push` rejected, non-fast-forward | The remote has commits you lack | `git pull --rebase origin main` first |
+| Screenshots 404 on the deployed site | Expected — they are repo docs, not payload | Nothing to fix; they appear in the README on GitHub |
 
 ---
 
@@ -151,10 +195,11 @@ node tools/verify.mjs --query "&demo=tiling"
 
 | Path | Committed | Reason |
 |---|---|---|
-| `omarchy.html`, `index.html` | **yes** | They are the deliverable — clone and double-click, or deploy with no build |
-| `src/`, `tools/` | **yes** | So anyone can rebuild and re-verify |
-| `screenshots/` | **yes** | Documentation, and the README embeds them |
-| `vercel.json`, `.vercelignore`, `.gitattributes` | **yes** | Hosting and line-ending correctness |
+| `omarchy.html`, `index.html` | **yes** | The deliverable — clone and double-click, no build step |
+| `public/` | **yes** | The same bundle in the conventional static output directory, so any host deploys with no config |
+| `src/`, `tools/` | **yes** | So anyone can rebuild and re-verify; Vercel needs them for the build |
+| `screenshots/` | **yes** | Documentation, embedded in the README. Not served by the site |
+| `vercel.json`, `.vercelignore`, `.gitattributes` | **yes** | Hosting config and line-ending correctness |
 | `.github/workflows/ci.yml` | **yes** | The CI gate |
 | `.verify/` | **no** | Throwaway headless-Chrome profiles (`.gitignore`) |
 | `node_modules/` | **no** | There are no dependencies |
