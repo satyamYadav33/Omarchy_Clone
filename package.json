@@ -1,0 +1,53 @@
+{
+  "name": "omarchy-web-clone",
+  "version": "4.0.4",
+  "private": true,
+  "description": "A high-fidelity, zero-install reconstruction of the Omarchy (Quattro) Linux desktop in a single HTML file.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Satyam Yadav",
+  "homepage": "https://github.com/satyamYadav33/Omarchy_Clone",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/satyamYadav33/Omarchy_Clone.git"
+  },
+  "bugs": {
+    "url": "https://github.com/satyamYadav33/Omarchy_Clone/issues"
+  },
+  "keywords": [
+    "omarchy",
+    "hyprland",
+    "quickshell",
+    "tiling-window-manager",
+    "linux-desktop",
+    "zero-dependency",
+    "static-site"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "ci": "node tools/ci.mjs",
+    "diag": "node tools/diag.mjs",
+    "verify": "node tools/verify.mjs",
+    "verify:tiling": "node tools/verify.mjs --query \"&demo=tiling\"",
+    "verify:theme": "node tools/verify.mjs --query \"&demo=theme\"",
+    "shots": "node tools/shots.mjs",
+    "metrics": "node tools/metrics.mjs",
+    "glyphs": "node tools/glyphs.mjs",
+    "serve": "node tools/serve.mjs",
+    "release": "node tools/ci.mjs && node tools/diag.mjs && node tools/verify.mjs"
+  },
+  "omarchy": {
+    "upstream": "https://omarchy.org",
+    "upstreamRepo": "https://github.com/omacom/omarchy",
+    "upstreamVersion": "4.0.4 (Quattro)",
+    "runtimeDependencies": 0,
+    "buildDependencies": 0,
+    "verificationBrowser": "Google Chrome (headless)",
+    "staticHosting": "Vercel — no build step, root index.html is the entry point"
+  }
+}

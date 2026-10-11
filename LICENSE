@@ -1,0 +1,54 @@
+MIT License
+
+Copyright (c) 2026 Satyam Yadav
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+================================================================================
+THIRD-PARTY NOTICE
+================================================================================
+
+This project is an unaffiliated, independent tribute to Omarchy, and is not
+endorsed by or affiliated with its authors.
+
+Omarchy
+  https://omarchy.org
+  https://github.com/omacom/omarchy
+  Copyright (c) David Heinemeier Hansson (DHH) and contributors
+  Licensed under the MIT License.
+
+  This project reproduces Omarchy's *behaviour and design* — its menu tree,
+  keyboard bindings, bar layout and module order — and transcribes its theme
+  colour palettes (themes/<name>/colors.toml on branch `quattro`) so that the
+  reconstruction is colour-accurate. No Omarchy source code, binary, ISO or
+  photographic asset is included or redistributed here. All wallpapers and
+  artwork in this project are generated procedurally at runtime from the active
+  colour palette.
+
+Hyprland — https://hypr.land — the tiling compositor whose semantics the
+  window-management engine in src/wm.js imitates. Not redistributed.
+
+Quickshell — https://quickshell.org — the shell toolkit Omarchy 4 is built on.
+  Not redistributed.
+
+Theme palettes are derived from the upstream Omarchy theme definitions, which
+in turn draw on the following community colour schemes, each the work of its
+own authors: Tokyo Night, Catppuccin, Ethereal, Everforest, Flexoki, Gruvbox,
+Kanagawa, Nord, Rosé Pine, Ristretto, Osaka Jade, and others. See
+src/themes.js for the full list of 23 palettes.

@@ -1,0 +1,49 @@
+name: CI
+
+# Verifies the sources, rebuilds the bundle and checks that the committed
+# omarchy.html matches it. Needs no browser, no packages and no secrets.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Build and verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Assert no dependencies were introduced
+        run: |
+          if [ -d node_modules ]; then echo "unexpected node_modules"; exit 1; fi
+          if [ -f package-lock.json ]; then echo "unexpected lockfile"; exit 1; fi
+          echo "zero-dependency layout confirmed"
+
+      - name: Syntax, rebuild identical, invariants
+        run: node tools/ci.mjs
+
+      - name: Report bundle size
+        run: |
+          ls -lh omarchy.html index.html
+          echo "bundle bytes: $(wc -c < omarchy.html)"
+
+      - name: Upload bundle as a build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: omarchy-html
+          path: |
+            omarchy.html
+            index.html
+          retention-days: 14

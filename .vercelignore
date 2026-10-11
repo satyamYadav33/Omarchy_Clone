@@ -1,0 +1,35 @@
+# ---------------------------------------------------------------------------
+# Kept OUT of the Vercel deployment.
+#
+# The site is one static file (index.html) plus screenshots, so nothing here is
+# needed at runtime. src/ and tools/ are deliberately NOT ignored: they are
+# committed so anyone can rebuild, and keeping them in the deployment makes the
+# deployed copy self-documenting. The whole repo is ~2.5 MB.
+# ---------------------------------------------------------------------------
+
+# Local tooling scratch space (headless Chrome profiles live here)
+.verify/
+
+# Git internals — Vercel clones the repo and must not receive this
+.git/
+.gitattributes
+.gitignore
+
+# GitHub-only files
+.github/
+CONTRIBUTING.md
+DEPLOY.md
+
+# Local environment and editor noise
+.vercel/
+.env
+.env.*
+!.env.example
+.vscode/
+.idea/
+node_modules/
+
+# OS noise
+.DS_Store
+Thumbs.db
+desktop.ini

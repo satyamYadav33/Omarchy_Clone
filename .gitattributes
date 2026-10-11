@@ -1,0 +1,16 @@
+# Normalise line endings so a Windows checkout and a Linux CI runner produce
+# byte-identical bundles. This matters: the build inlines sources verbatim, and
+# a CRLF/LF mismatch would make the committed omarchy.html differ from a fresh
+# build, which the "bundle is up to date" CI check would then (correctly) fail.
+* text=auto eol=lf
+
+# The deliverable is generated and large; keep it out of diffs and linguist stats.
+omarchy.html  -diff linguist-generated
+index.html    -diff linguist-generated
+
+# Screenshots are binary.
+*.png binary
+*.jpg binary
+*.webp binary
+*.gif binary
+*.ico binary

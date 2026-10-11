@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="tokyo-night" data-mode="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>Omarchy 4.0.4 (Quattro) — web clone</title>
+<meta name="description" content="A high-fidelity, zero-install reconstruction of the Omarchy Linux desktop: Hyprland-style tiling, the Quattro Quickshell bar and menu, all 23 themes, and the full hotkey table. One file, no dependencies, no network.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='none' stroke='%237aa2f7' stroke-width='9' stroke-linecap='round' stroke-dasharray='176 76' transform='rotate(-58 50 50)'/%3E%3Ccircle cx='50' cy='50' r='15' fill='%237aa2f7'/%3E%3C/svg%3E">
+<style>
+/*__OMARCHY_CSS__*/
+</style>
+</head>
+<body>
+<noscript>
+  <div style="padding:40px;font-family:monospace;color:#c0caf5;background:#1a1b26;height:100vh">
+    <h1>Omarchy web clone</h1>
+    <p>This desktop is rendered entirely in JavaScript. Enable JavaScript to power it on.</p>
+  </div>
+</noscript>
+<script>
+/* First line of defence: if anything at all fails to initialise, record it and
+   surface it in the DOM instead of leaving a black screen with no explanation.
+   Visiting with ?capture=1 also pins a full state report to the page; this is
+   band-independent so it works even when the engine itself never loads. */
+(function () {
+  var bad = [];
+  function paint() {
+    var pre = document.getElementById('oma-fatal');
+    if (!pre) {
+      pre = document.createElement('pre');
+      pre.id = 'oma-fatal';
+      pre.style.cssText = 'position:fixed;left:0;top:0;right:0;z-index:2147483647;background:#1a1b26;' +
+        'color:#f7768e;font:12px ui-monospace,monospace;padding:12px;margin:0;white-space:pre-wrap;max-height:70vh;overflow:auto';
+      (document.body || document.documentElement).appendChild(pre);
+    }
+    pre.textContent = '===FATAL===\n' + bad.join('\n') + '\n===END===\n' +
+      'Tip: open this file with ?capture=1 for a full state report.';
+  }
+  function add(msg) { bad.push(msg); paint(); }
+  window.addEventListener('error', function (e) {
+    var where = e.filename ? e.filename.split('/').pop() + ':' + e.lineno + ':' + e.colno : '?';
+    add('error: ' + e.message + '  @ ' + where);
+    if (e.error && e.error.stack) add(e.error.stack);
+  });
+  window.addEventListener('unhandledrejection', function (e) {
+    add('unhandled rejection: ' + String((e.reason && e.reason.stack) || e.reason));
+  });
+  window.__omaFatal = add;
+  window.addEventListener('DOMContentLoaded', function () {
+    setTimeout(function () {
+      if (!window.OMA) add('OMA namespace was never created — the bundle did not execute.');
+      else if (!document.getElementById('oma-report') && /capture=1/.test(location.search) && !window.OMA.__engineAlive) {
+        add('engine object exists but the session never reported ready.');
+      }
+    }, 12000);
+  });
+})();
+</script>
+<script>
+/*__OMARCHY_JS__*/
+</script>
+<script>
+/* ---------------------------------------------------------------------------
+ * Deep links and verification flags, resolved BEFORE the engine loads so that
+ * startup can act on them:
+ *   omarchy.html?open=editor,files,btop     open these apps on workspace 1
+ *   omarchy.html?theme=Gruvbox              boot straight into a theme
+ *   omarchy.html?demo=menu|tiling|theme|keys|capture|terminal|files|notify
+ *   omarchy.html?fast=1                     skip the power screen and installer
+ *   omarchy.html?capture=1                  pin a state report to the page
+ *   omarchy.html?boot=1                     force the full boot sequence anyway
+ * Any open/demo/theme link implies fast boot; the boot screens are then walked
+ * automatically instead of waiting for a human.
+ * ------------------------------------------------------------------------- */
+(function () {
+  function q(name) {
+    var m = new RegExp('[?&]' + name + '=([^&]*)').exec(String(location.search || ''));
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+  var theme = q('theme'), open = q('open'), demo = q('demo');
+  var fast = /[?&]fast=1/.test(location.search) || !!(open || demo || theme);
+  if (/[?&]boot=1/.test(location.search)) fast = false;
+  window.OMA = window.OMA || {};
+  window.__OMA_FLAGS__ = { capture: /[?&]capture=1/.test(location.search), fast: fast };
+  window.OMA.__launchArgs = { theme: theme, open: open, demo: demo };
+  window.OMA.__launchRan = false;
+  if (!theme && !open && !demo) return;
+
+  var ran = false;
+
+  /* Walk the boot screens: send Enter until the session reports ready. */
+  var beat = 0;
+  function advance() {
+    if (window.OMA.sessionReady || beat++ > 40) return;
+    var ev;
+    try {
+      ev = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+    } catch (e) {
+      ev = document.createEvent('KeyboardEvent');
+      ev.initKeyboardEvent('keydown', true, true, window, 'Enter', 0, '');
+    }
+    window.dispatchEvent(ev);
+    setTimeout(advance, 140);
+  }
+  advance();
+
+  function run() {
+    if (ran) return;
+    var O = window.OMA;
+    window.OMA.__launchState = {
+      sawOma: !!O, sawWm: !!(O && O.WM), sawSystem: !!(O && O.System), ready: !!(O && O.sessionReady)
+    };
+    if (!O || !O.WM || !O.System || !O.sessionReady) return;
+    ran = true;
+    window.OMA.__launchRan = true;
+    if (theme) {
+      var t = O.Themes.byName(theme);
+      if (t) O.System.setTheme(t.id, true);
+    }
+    (open ? open.split(',') : []).forEach(function (id) {
+      id = id.trim();
+      if (id && O.WM.registry.get(id)) O.WM.open(id);
+    });
+    if (!demo) return;
+    var steps = {
+      menu: function () { O.Menu.open('all'); },
+      apps: function () { O.Menu.open('apps'); },
+      keys: function () { O.Menu.keybindingsOverlay(); },
+      about: function () { O.System.about(); },
+      theme: function () { O.Menu.open('all', 'style.theme'); },
+      terminal: function () { O.WM.open('terminal', { run: 'neofetch' }); },
+      files: function () { O.WM.open('files'); },
+      capture: function () { O.Capture.screenshot('region'); },
+      emoji: function () { O.Capture.emojiPicker(); },
+      panels: function () { O.Shell.togglePanel('audio', document.body); },
+      tiling: function () {
+        O.WM.open('editor', '/home/oma/Projects/omarchy-web/src/wm.js');
+        O.WM.open('files');
+        O.WM.open('btop');
+        O.WM.open('terminal', { run: 'neofetch' });
+      },
+      webapps: function () { O.WM.open('web-youtube'); O.WM.open('web-x'); },
+      notify: function () {
+        O.Shell.notify({ app: 'Omarchy', icon: 'layers', summary: 'Welcome to Omarchy 4.0.4 (Quattro)', body: 'Super = Caps Lock. Caps + Space opens the one menu.' });
+        O.Shell.notify({ app: 'Style', icon: 'palette', summary: 'Theme applied to 6 surfaces', body: 'Bar, menu, notifications, OSD, lock screen and terminal.' });
+      }
+    };
+    (Array.isArray(demo) ? demo : [demo]).forEach(function (d) { if (steps[d]) steps[d](); });
+  }
+  window.addEventListener('session:ready', function () { setTimeout(run, 400); });
+  var poll = setInterval(function () { run(); if (ran) clearInterval(poll); }, 150);
+  setTimeout(function () { clearInterval(poll); run(); }, 12000);
+})();
+</script>
+</body>
+</html>
