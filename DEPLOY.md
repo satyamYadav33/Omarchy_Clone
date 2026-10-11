@@ -1,41 +1,42 @@
 # Publishing and deploying
 
-Target repository: <https://github.com/satyamYadav33/Omarchy_Clone>
+Repository: <https://github.com/satyamYadav33/Omarchy_Clone>
 Static hosting: **Vercel** — no build step, no environment variables, no framework.
 
----
-
-## The short version
-
-```bash
-git add -A
-git commit -m "Omarchy (Quattro) web clone: single-file desktop, 23 themes, CI, Vercel config"
-git push -u origin main
-```
-
-Then on Vercel: **Add New → Project → import `Omarchy_Clone` → Deploy**. Accept
-every default. There is nothing to configure.
+> **Status: the initial commit is already pushed.** `main` is at `974c3bd` with all
+> 54 files. The remaining step is the Vercel import below.
 
 ---
 
-## Why Vercel needs no configuration here
+## Deploying on Vercel
 
-Vercel treats a repository with a root `index.html` and no framework as a static
-site and serves it as-is. This project is deliberately built for that:
+**Option A — dashboard (easiest).** Go to <https://vercel.com/new>, import
+`Omarchy_Clone`, and click Deploy. **Accept every default** — there is nothing to
+configure:
 
 | Vercel setting | Value | Why |
 |---|---|---|
-| Framework Preset | **Other** (auto) | There is no framework |
+| Framework Preset | **Other** (auto-detected) | There is no framework |
 | Build Command | *(empty)* | `index.html` at the root **is** the built output |
 | Output Directory | *(empty / root)* | The deliverable is committed, not generated on the host |
 | Install Command | *(empty)* | `dependencies: {}` — nothing to install |
 | Root Directory | `./` | — |
 | Environment Variables | **none** | Nothing is configurable at runtime |
 
-`vercel.json` only adds caching and security headers, plus `cleanUrls`. If you ever
-delete it, the site still deploys and works.
+**Option B — CLI** (installed on this machine, v2.x, needs a login):
 
-The whole deployment is roughly **2.5 MB**, of which most is the screenshots.
+```bash
+vercel login
+vercel          # preview deployment
+vercel --prod   # production deployment
+```
+
+Either way, every later `git push` to `main` redeploys automatically.
+
+`vercel.json` only adds caching and security headers, plus `cleanUrls`. Delete it
+and the site still deploys and works.
+
+The whole deployment is roughly **3.5 MB**, most of which is the screenshots.
 
 ### Routes
 
@@ -61,57 +62,36 @@ Deep links are **query strings, not routes**, so no rewrites are needed —
 
 ---
 
-## Step-by-step
-
-### 1. Push to GitHub
-
-The repository already exists and is empty. From the project folder:
+## Pushing further changes
 
 ```bash
-git init
-git branch -M main
-git remote add origin https://github.com/satyamYadav33/Omarchy_Clone.git
 git add -A
-git commit -m "Omarchy (Quattro) web clone: single-file desktop, 23 themes, CI, Vercel config"
-git push -u origin main
+git commit -m "your message"
+git push
 ```
 
-**Authentication.** No credential helper is configured on this machine and there
-are no SSH keys, so the push needs a credential. Easiest route:
+`main` already tracks `origin/main`, so no `-u` is needed again.
+
+### Authentication, as configured here
+
+The push succeeded using **Git Credential Manager** (`credential.helper=manager`),
+which already held a credential for GitHub. If you hit an auth prompt on another
+machine, either let the GCM window sign you in, or:
 
 ```bash
 gh auth login          # GitHub CLI is installed (v2.97.0)
 gh auth setup-git      # makes git use gh's credentials
-git push -u origin main
 ```
 
-Or create a Personal Access Token with `repo` scope and paste it when git prompts
-for a password:
+Or use a Personal Access Token with `repo` scope:
 
 ```bash
 git push https://<TOKEN>@github.com/satyamYadav33/Omarchy_Clone.git main
 ```
 
-### 2. Deploy on Vercel
+### Windows note: `schannel` fails, use OpenSSL
 
-**Option A — dashboard.** <https://vercel.com/new> → import `Omarchy_Clone` →
-Deploy. Every default is already correct.
-
-**Option B — CLI** (installed, needs `vercel login`):
-
-```bash
-vercel login
-vercel          # preview deployment
-vercel --prod   # production deployment
-```
-
-Either way, later `git push` to `main` redeploys automatically.
-
----
-
-## Windows note: `schannel` fails, use OpenSSL
-
-On this machine git's default TLS backend fails before it reaches GitHub:
+On this machine git's default TLS backend fails before it reaches GitHub at all:
 
 ```
 fatal: unable to access '…': schannel: AcquireCredentialsHandle failed:
@@ -119,13 +99,19 @@ SEC_E_NO_CREDENTIALS (0x8009030e) - No credentials are available in the
 security package
 ```
 
-The bundled OpenSSL backend works. Set it once for this repository:
+The bundled OpenSSL backend works. It is already set for this clone:
 
 ```bash
 git config http.sslBackend openssl
 ```
 
-That writes to `.git/config`, so it is local and never committed.
+That writes to `.git/config`, so it is local and never committed. If you clone
+fresh on Windows and see that error, re-run it.
+
+*(Unrelated but similar-looking: PowerShell 5.1's `Invoke-WebRequest` fails against
+GitHub with "underlying connection was closed" because it defaults to TLS 1.0/1.1.
+Use `curl.exe`, `web_fetch`, or set `[Net.ServicePointManager]::SecurityProtocol`.
+That is a client issue, not a repository one.)*
 
 ---
 
@@ -133,7 +119,7 @@ That writes to `.git/config`, so it is local and never committed.
 
 ```bash
 node tools/ci.mjs        # syntax, bundle up to date, invariants — no browser needed
-node tools/serve.mjs     # preview exactly what Vercel will serve
+node tools/serve.mjs     # preview exactly what Vercel will serve (localhost:4173)
 ```
 
 `tools/ci.mjs` fails if `src/` was edited without rebuilding `omarchy.html`,
